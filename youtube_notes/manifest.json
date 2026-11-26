@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "YT NoteFlow - Markdown Notes Sidepanel",
+  "version": "1.0.1",
+  "description": "Take rich Markdown notes synced automatically to specific YouTube videos with clickable interactive timestamps.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open YT NoteFlow"
+  },
+  "commands": {
+    "toggle-video-playback": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space",
+        "mac": "Command+Shift+Space"
+      },
+      "description": "Play or pause the active YouTube video"
+    }
+  }
+}

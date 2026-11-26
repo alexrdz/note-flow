@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync API Reference | NoteFlow</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  </script>
+</head>
+
+<body class="page">
+
+  <nav class="site-header">
+    <div class="layout-page site-header__inner">
+      <a href="index.html" class="brand layout-cluster" aria-label="NoteFlow Home">
+        <div class="brand__mark">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H8v-2h3v2zm4-4H8V9h7v3z" />
+          </svg>
+        </div>
+        <span class="brand__name">NoteFlow</span>
+      </a>
+
+      <div class="site-header__actions layout-cluster">
+        <a href="index.html" class="site-header__link u-hidden-mobile">Home</a>
+
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          <svg id="theme-toggle-light-icon" class="theme-toggle__icon" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="theme-toggle-dark-icon" class="theme-toggle__icon u-hidden" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <section class="docs-hero">
+      <div class="layout-page layout-stack docs-hero__inner">
+        <h1 class="docs-hero__title">Sync API Reference</h1>
+        <p class="docs-hero__lead">
+          Build your own backend for NoteFlow in any language. This page documents the HTTP contract your server needs to implement.
+        </p>
+      </div>
+    </section>
+
+    <div class="layout-page docs-layout">
+      <aside class="docs-sidebar u-hidden-mobile">
+        <nav class="docs-nav layout-stack" aria-label="Documentation navigation">
+          <a href="#overview" class="docs-nav__link">Overview</a>
+          <a href="#authentication" class="docs-nav__link">Authentication</a>
+          <a href="#get-notes" class="docs-nav__link">GET — Fetch Notes</a>
+          <a href="#post-notes" class="docs-nav__link">POST — Push Notes</a>
+          <a href="#sync-behavior" class="docs-nav__link">Sync Behavior</a>
+          <a href="#error-handling" class="docs-nav__link">Error Handling</a>
+          <a href="#checklist" class="docs-nav__link">Implementation Checklist</a>
+        </nav>
+      </aside>
+
+      <article class="docs-content layout-stack">
+
+        <!-- Overview -->
+        <section id="overview" class="docs-section layout-stack">
+          <h2 class="docs-section__title">Overview</h2>
+          <p>
+            NoteFlow's "Bring Your Own Sync" feature lets users configure a custom HTTP endpoint to sync their notes across devices. Your server needs to implement just two operations at a single URL:
+          </p>
+          <ul class="docs-list">
+            <li><strong>GET</strong> — Return notes modified since a given timestamp</li>
+            <li><strong>POST</strong> — Accept notes that are newer on the client</li>
+          </ul>
+          <p>
+            That's it. No WebSockets, no OAuth, no complex handshakes. A single URL, two HTTP methods, JSON in and out.
+          </p>
+        </section>
+
+        <!-- Authentication -->
+        <section id="authentication" class="docs-section layout-stack">
+          <h2 class="docs-section__title">Authentication</h2>
+          <p>
+            All requests include an API key in the <code class="u-code-inline">X-API-Key</code> header. The user configures this key in the extension settings alongside the endpoint URL.
+          </p>
+          <div class="code-window">
+            <div class="code-window__header">Request Header</div>
+            <div class="code-window__body">
+              <pre><code>X-API-Key: your-secret-key-here</code></pre>
+            </div>
+          </div>
+          <p>
+            How you validate this key is up to you — a simple static token check, a database lookup, or a full auth layer. The extension doesn't care as long as a <code class="u-code-inline">200</code> response comes back with the expected shape.
+          </p>
+        </section>
+
+        <!-- GET Notes -->
+        <section id="get-notes" class="docs-section layout-stack">
+          <h2 class="docs-section__title">GET — Fetch Notes</h2>
+          <p>
+            The extension calls this to pull down any notes that have been modified since the last sync.
+          </p>
+
+          <h3 class="docs-subsection__title">Request</h3>
+          <div class="code-window">
+            <div class="code-window__header">HTTP</div>
+            <div class="code-window__body">
+              <pre><code>GET {syncUrl}?last_sync={unix_timestamp_seconds}
+X-API-Key: {key}</code></pre>
+            </div>
+          </div>
+
+          <div class="docs-table-wrapper">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Location</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="u-code-inline">last_sync</code></td>
+                  <td>Query string</td>
+                  <td>Unix timestamp in <strong>seconds</strong>. Return all notes modified after this time. Will be <code class="u-code-inline">0</code> on first sync.</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">X-API-Key</code></td>
+                  <td>Header</td>
+                  <td>User-configured API key for authentication.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="docs-subsection__title">Response</h3>
+          <div class="code-window">
+            <div class="code-window__header">200 OK — application/json</div>
+            <div class="code-window__body">
+<pre><code>{
+  "status": "success",
+  "server_time": 1719000000000,
+  "notes": [
+    {
+      "video_id": "dQw4w9WgXcQ",
+      "video_title": "Rick Astley - Never Gonna Give You Up",
+      "markdown": "# My notes\n\n[0:15] Intro starts here",
+      "updated_at": "1719000000000"
+    }
+  ]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="docs-table-wrapper">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="u-code-inline">status</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td><code class="u-code-inline">"success"</code> on success</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">server_time</code></td>
+                  <td><code class="u-code-inline">number</code></td>
+                  <td>Current server time in <strong>milliseconds</strong> (epoch). The extension stores this and sends it as <code class="u-code-inline">last_sync</code> on the next request (converted to seconds).</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes</code></td>
+                  <td><code class="u-code-inline">array</code></td>
+                  <td>Notes modified since <code class="u-code-inline">last_sync</code>. Empty array if nothing changed.</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].video_id</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>YouTube video ID (e.g. <code class="u-code-inline">dQw4w9WgXcQ</code>)</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].video_title</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>Human-readable video title</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].markdown</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>Full note content in Markdown</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].updated_at</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>Last modified time in <strong>milliseconds</strong> (epoch), as a string</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- POST Notes -->
+        <section id="post-notes" class="docs-section layout-stack">
+          <h2 class="docs-section__title">POST — Push Notes</h2>
+          <p>
+            The extension sends locally-modified notes to your server. These are notes that have a newer <code class="u-code-inline">updatedAt</code> than what the server last reported.
+          </p>
+
+          <h3 class="docs-subsection__title">Request</h3>
+          <div class="code-window">
+            <div class="code-window__header">HTTP</div>
+            <div class="code-window__body">
+              <pre><code>POST {syncUrl}
+Content-Type: application/json
+X-API-Key: {key}</code></pre>
+            </div>
+          </div>
+
+          <div class="code-window">
+            <div class="code-window__header">Request Body</div>
+            <div class="code-window__body">
+<pre><code>{
+  "notes": [
+    {
+      "videoId": "dQw4w9WgXcQ",
+      "videoTitle": "Rick Astley - Never Gonna Give You Up",
+      "markdown": "# Updated notes content",
+      "updatedAt": 1719000000000
+    }
+  ]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="docs-table-wrapper">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code class="u-code-inline">notes[].videoId</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>YouTube video ID</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].videoTitle</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>Video title</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].markdown</code></td>
+                  <td><code class="u-code-inline">string</code></td>
+                  <td>Note content in Markdown</td>
+                </tr>
+                <tr>
+                  <td><code class="u-code-inline">notes[].updatedAt</code></td>
+                  <td><code class="u-code-inline">number</code></td>
+                  <td>Last modified time in <strong>milliseconds</strong> (epoch)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="docs-subsection__title">Response</h3>
+          <div class="code-window">
+            <div class="code-window__header">200 OK — application/json</div>
+            <div class="code-window__body">
+<pre><code>{
+  "status": "success"
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="docs-callout">
+            <strong>Note the naming difference:</strong> The GET response uses <code class="u-code-inline">snake_case</code> (<code class="u-code-inline">video_id</code>, <code class="u-code-inline">updated_at</code>) while the POST body uses <code class="u-code-inline">camelCase</code> (<code class="u-code-inline">videoId</code>, <code class="u-code-inline">updatedAt</code>). Your server must handle both conventions.
+          </div>
+        </section>
+
+        <!-- Sync Behavior -->
+        <section id="sync-behavior" class="docs-section layout-stack">
+          <h2 class="docs-section__title">Sync Behavior</h2>
+          <ul class="docs-list">
+            <li><strong>Manual trigger</strong> — Sync only runs when the user clicks "Sync Now" in the extension. There's no background polling or automatic sync.</li>
+            <li><strong>Last-write-wins</strong> — Conflict resolution is based on <code class="u-code-inline">updatedAt</code> timestamps. Whichever side has the more recent timestamp wins.</li>
+            <li><strong>No tombstones</strong> — When a user deletes a note locally, it's removed from local storage but no deletion event is sent to the server. If the note still exists on the server, it will reappear on the next sync.</li>
+            <li><strong>Delta sync</strong> — Only notes modified since <code class="u-code-inline">last_sync</code> are exchanged in either direction.</li>
+          </ul>
+
+          <h3 class="docs-subsection__title">Sync Flow</h3>
+          <ol class="docs-list docs-list--ordered">
+            <li>Extension sends <strong>GET</strong> with the stored <code class="u-code-inline">last_sync</code> timestamp</li>
+            <li>Server returns notes modified since that time</li>
+            <li>Extension merges server notes into local storage (last-write-wins)</li>
+            <li>Extension sends <strong>POST</strong> with any local notes that are newer than the server's versions</li>
+            <li>Extension stores the <code class="u-code-inline">server_time</code> from the GET response for next sync</li>
+          </ol>
+        </section>
+
+        <!-- Error Handling -->
+        <section id="error-handling" class="docs-section layout-stack">
+          <h2 class="docs-section__title">Error Handling</h2>
+          <p>
+            The extension checks for a <code class="u-code-inline">200</code> status code and a JSON body with <code class="u-code-inline">"status": "success"</code>. Anything else is treated as a failure and shown to the user as a sync error.
+          </p>
+          <p>Recommended error responses:</p>
+          <div class="code-window">
+            <div class="code-window__header">401 Unauthorized</div>
+            <div class="code-window__body">
+<pre><code>{
+  "status": "error",
+  "message": "Invalid API key"
+}</code></pre>
+            </div>
+          </div>
+          <div class="code-window">
+            <div class="code-window__header">500 Internal Server Error</div>
+            <div class="code-window__body">
+<pre><code>{
+  "status": "error",
+  "message": "Database connection failed"
+}</code></pre>
+            </div>
+          </div>
+          <p>
+            The extension doesn't retry automatically — the user will need to click "Sync Now" again.
+          </p>
+        </section>
+
+        <!-- Implementation Checklist -->
+        <section id="checklist" class="docs-section layout-stack">
+          <h2 class="docs-section__title">Implementation Checklist</h2>
+          <p>Here's the minimum you need to get a working sync backend:</p>
+          <ul class="docs-list docs-list--check">
+            <li>A single URL that accepts both GET and POST</li>
+            <li>Validate the <code class="u-code-inline">X-API-Key</code> header on every request</li>
+            <li>Store notes keyed by <code class="u-code-inline">video_id</code> with their <code class="u-code-inline">updated_at</code> timestamp</li>
+            <li>GET: filter notes where <code class="u-code-inline">updated_at &gt; last_sync</code> (convert seconds → ms for comparison)</li>
+            <li>GET: return current server time in ms as <code class="u-code-inline">server_time</code></li>
+            <li>POST: upsert each note by <code class="u-code-inline">videoId</code>, storing the new <code class="u-code-inline">updatedAt</code></li>
+            <li>Return <code class="u-code-inline">{ "status": "success" }</code> on success with a 200 status</li>
+            <li>Return appropriate HTTP error codes with a JSON body on failure</li>
+          </ul>
+          <p>
+            That's roughly 50–100 lines of code in most languages. A SQLite database or even a JSON file on disk is plenty for personal use.
+          </p>
+        </section>
+
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="layout-page site-footer__inner layout-cluster">
+      <div class="site-footer__copyright layout-cluster">
+        <svg class="site-footer__logo" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H8v-2h3v2zm4-4H8V9h7v3z" />
+        </svg>
+        <span>&copy; <span id="year"></span> NoteFlow. All rights reserved.</span>
+      </div>
+      <div class="site-footer__links layout-cluster">
+        <a href="index.html" class="site-footer__link">Home</a>
+        <a href="#" class="site-footer__link">GitHub</a>
+        <a href="#" class="site-footer__link">Privacy Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const darkIcon = document.getElementById('theme-toggle-dark-icon');
+    const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+    if (document.documentElement.classList.contains('dark')) {
+      lightIcon.classList.remove('u-hidden');
+    } else {
+      darkIcon.classList.remove('u-hidden');
+    }
+
+    themeToggleBtn.addEventListener('click', function () {
+      darkIcon.classList.toggle('u-hidden');
+      lightIcon.classList.toggle('u-hidden');
+
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+  </script>
+</body>
+
+</html>

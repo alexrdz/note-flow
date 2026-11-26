@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT NoteFlow</title>
+
+  <!-- Premium, secure Native CSS (Zero CDNs, zero Tailwind, fully CSP compliant) -->
+  <style>
+    /* Styling Variable Tokens mirroring YouTube's visual depth */
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-banner: #f1f5f9;
+      --border-color: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --yt-red: #ff0000;
+      --yt-red-hover: #cc0000;
+      --btn-secondary-bg: #f1f5f9;
+      --btn-secondary-hover: #e2e8f0;
+      --btn-primary-bg: #0f172a;
+      --btn-primary-text: #ffffff;
+      --btn-primary-hover: #1e293b;
+      --modal-overlay: rgba(0, 0, 0, 0.4);
+    }
+
+    /* Dark Theme Variables */
+    .dark {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1f1f1f;
+      --bg-banner: #141414;
+      --border-color: #2d2d2d;
+      --text-primary: #f1f1f1;
+      --text-secondary: #aaaaaa;
+      --text-muted: #717171;
+      --yt-red: #ff0000;
+      --yt-red-hover: #cc0000;
+      --btn-secondary-bg: #2d2d2d;
+      --btn-secondary-hover: #3d3d3d;
+      --btn-primary-bg: #f1f1f1;
+      --btn-primary-text: #0f0f0f;
+      --btn-primary-hover: #e1e1e1;
+      --modal-overlay: rgba(0, 0, 0, 0.7);
+    }
+
+    /* Layout Elements & Resets */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Utility classes */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Header Container Styles */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: var(--bg-secondary);
+      border-b: 1px solid var(--border-color);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-logo span {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.025em;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Interactive Buttons styling */
+    .btn-icon {
+      background: none;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background-color 0.15s, color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background-color: var(--btn-secondary-bg);
+      color: var(--text-primary);
+    }
+
+    .btn-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Main View Area */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* View states styling */
+    #active-editor-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Active Video Details Banner */
+    .active-video-banner {
+      background-color: var(--bg-banner);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .banner-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .active-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--yt-red);
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--yt-red);
+    }
+
+    .pulse {
+      animation: pulse-animation 1.5s infinite;
+    }
+
+    @keyframes pulse-animation {
+      0% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.4;
+      }
+    }
+
+    .save-status {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .save-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .save-dot.amber {
+      background-color: #f59e0b;
+    }
+
+    .save-dot.emerald {
+      background-color: #10b981;
+    }
+
+    .video-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text-primary);
+      margin-top: 2px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Video Playback & Timestamp Control Strip */
+    .video-controls-bar {
+      border-bottom: 1px solid var(--border-color);
+      padding: 7px 12px;
+      flex-shrink: 0;
+      background-color: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .video-controls-left {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    /* Auto-Pause Toggle Switch Pill */
+    .autopause-toggle {
+      background: none;
+      border: 1px solid var(--border-color);
+      padding: 4px 8px 4px 6px;
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .autopause-toggle:hover {
+      background-color: var(--btn-secondary-bg);
+      color: var(--text-primary);
+    }
+
+    .autopause-toggle.active {
+      background-color: rgba(255, 0, 0, 0.08);
+      border-color: rgba(255, 0, 0, 0.3);
+      color: var(--text-primary);
+    }
+
+    .toggle-track {
+      width: 24px;
+      height: 14px;
+      border-radius: 999px;
+      background-color: var(--border-color);
+      position: relative;
+      transition: background-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .autopause-toggle.active .toggle-track {
+      background-color: var(--yt-red);
+    }
+
+    .toggle-thumb {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .autopause-toggle.active .toggle-thumb {
+      transform: translateX(10px);
+    }
+
+    /* Quick Play / Resume Button */
+    .btn-play-pause {
+      background-color: var(--btn-secondary-bg);
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 7px;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    }
+
+    .btn-play-pause:hover {
+      background-color: var(--btn-secondary-hover);
+    }
+
+    .btn-play-pause:active {
+      transform: scale(0.97);
+    }
+
+    .btn-play-pause svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    .btn-play-pause.is-paused {
+      background-color: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #10b981;
+    }
+
+    .btn-play-pause.is-paused:hover {
+      background-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .kbd-hint {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.62rem;
+      font-weight: 600;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .btn-play-pause.is-paused .kbd-hint {
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #10b981;
+    }
+
+    /* Tab Switcher & Editor Control Strip */
+    .editor-controls {
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 12px;
+      flex-shrink: 0;
+      background-color: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab-group {
+      display: flex;
+      background-color: var(--btn-secondary-bg);
+      padding: 2px;
+      border-radius: 8px;
+    }
+
+    .tab-btn {
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Format Bar Styling */
+    .toolbar-formatting {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .toolbar-btn {
+      background: none;
+      border: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s, color 0.15s;
+    }
+
+    .toolbar-btn:hover {
+      background-color: var(--btn-secondary-bg);
+      color: var(--text-primary);
+    }
+
+    .toolbar-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .btn-timestamp {
+      color: var(--yt-red);
+      font-weight: 700;
+    }
+
+    .btn-timestamp:hover {
+      background-color: rgba(255, 0, 0, 0.08);
+      color: var(--yt-red);
+    }
+
+    .divider {
+      width: 1px;
+      height: 16px;
+      background-color: var(--border-color);
+      margin: 0 4px;
+    }
+
+    /* Panels Layout Area */
+    .panels-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background-color: var(--bg-secondary);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #note-textarea {
+      width: 100%;
+      flex: 1;
+      padding: 16px;
+      background: transparent;
+      outline: none;
+      border: none;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      resize: none;
+      overflow-y: auto;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+
+    #note-textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 0.8;
+    }
+
+    /* Clean Markdown Preview Renderer */
+    #note-preview {
+      position: absolute;
+      inset: 0;
+      padding: 16px;
+      overflow-y: auto;
+      background-color: var(--bg-secondary);
+      line-height: 1.6;
+    }
+
+    /* Rendered Markdown Element Scopes */
+    .markdown-body h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+    }
+
+    .markdown-body h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    .markdown-body h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+
+    .markdown-body p {
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+
+    .markdown-body ul,
+    .markdown-body ol {
+      margin-bottom: 12px;
+      padding-left: 18px;
+    }
+
+    .markdown-body li {
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+    }
+
+    /* Interactive Timestamp Links custom pill design */
+    .markdown-body a {
+      color: var(--yt-red) !important;
+      text-decoration: none !important;
+      font-weight: 700;
+      background-color: rgba(255, 0, 0, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: background-color 0.15s;
+    }
+
+    .markdown-body a:hover {
+      background-color: rgba(255, 0, 0, 0.15);
+      text-decoration: underline !important;
+    }
+
+    .markdown-body code {
+      background-color: var(--btn-secondary-bg);
+      color: #ef4444;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: monospace;
+    }
+
+    .markdown-body pre {
+      background-color: var(--bg-primary);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+    }
+
+    .markdown-body pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+      font-size: 0.8rem;
+    }
+
+    .markdown-body blockquote {
+      border-left: 4px solid var(--border-color);
+      padding-left: 12px;
+      font-style: italic;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .task-list-item {
+      list-style-type: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .placeholder-text {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Actions Bottom Bar */
+    .actions-bar {
+      background-color: var(--bg-primary);
+      border-t: 1px solid var(--border-color);
+      padding: 12px 16px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-delete-note {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+
+    .btn-delete-note:hover {
+      color: var(--yt-red);
+    }
+
+    .right-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Button variants */
+    .btn-action {
+      border: none;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s, transform 0.1s;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    .btn-action-primary {
+      background-color: var(--btn-primary-bg);
+      color: var(--btn-primary-text);
+    }
+
+    .btn-action-primary:hover {
+      background-color: var(--btn-primary-hover);
+    }
+
+    .btn-action-secondary {
+      background-color: var(--btn-secondary-bg);
+      color: var(--text-primary);
+    }
+
+    .btn-action-secondary:hover {
+      background-color: var(--btn-secondary-hover);
+    }
+
+    .btn-action svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Notebook Directory View CSS */
+    .notebook-directory-view {
+      position: absolute;
+      inset: 0;
+      background-color: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      z-index: 40;
+      overflow: hidden;
+    }
+
+    .notebook-header {
+      padding: 16px;
+      background-color: var(--bg-secondary);
+      border-b: 1px solid var(--border-color);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .notebook-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .notebook-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .notebook-title svg {
+      width: 20px;
+      height: 20px;
+      color: var(--yt-red);
+    }
+
+    .btn-back-link {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: color 0.15s;
+    }
+
+    .btn-back-link:hover {
+      color: var(--text-primary);
+    }
+
+    .search-container {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      font-size: 0.8rem;
+      padding: 10px 12px 10px 36px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--yt-red);
+      box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.15);
+    }
+
+    .search-icon-svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Collapsible Sync Panel Styling */
+    .sync-settings-panel {
+      border-top: 1px solid var(--border-color);
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sync-fields-container {
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sync-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .sync-status-msg {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .notebook-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .note-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .note-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .note-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-badge {
+      color: var(--yt-red);
+    }
+
+    .card-date {
+      color: var(--text-muted);
+    }
+
+    .note-card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text-primary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .note-card-snippet {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .note-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-t: 1px solid var(--border-color);
+      padding-top: 10px;
+      margin-top: 2px;
+    }
+
+    .btn-card-action {
+      border: none;
+      padding: 6px 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s;
+    }
+
+    .btn-card-launch {
+      background-color: var(--btn-secondary-bg);
+      color: var(--text-primary);
+    }
+
+    .btn-card-launch:hover {
+      background-color: var(--btn-secondary-hover);
+    }
+
+    .btn-card-trash {
+      background: none;
+      color: var(--text-muted);
+      padding: 6px;
+    }
+
+    .btn-card-trash:hover {
+      color: var(--yt-red);
+      background-color: rgba(255, 0, 0, 0.08);
+    }
+
+    .btn-card-trash svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Fallback Page State Styling */
+    .not-youtube-view {
+      position: absolute;
+      inset: 0;
+      background-color: var(--bg-primary);
+      z-index: 30;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .fallback-icon-container {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background-color: rgba(255, 0, 0, 0.08);
+      color: var(--yt-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .fallback-icon-container svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .fallback-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .fallback-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 24px;
+      max-width: 260px;
+    }
+
+    .btn-fallback {
+      width: 100%;
+      max-width: 260px;
+      padding: 10px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.15s;
+    }
+
+    .btn-fallback:hover {
+      background-color: var(--btn-secondary-bg);
+    }
+
+    .btn-fallback svg {
+      width: 16px;
+      height: 16px;
+      color: var(--yt-red);
+    }
+
+    /* Modal Styling */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: var(--modal-overlay);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      width: 100%;
+      max-width: 300px;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-header svg {
+      width: 18px;
+      height: 18px;
+      color: var(--yt-red);
+    }
+
+    .modal-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .modal-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Custom Webkit scrollbar adjustments */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--border-color);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--text-muted);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header Section -->
+  <header>
+    <div class="header-logo">
+      <svg style="color: var(--yt-red); width: 22px; height: 22px;" fill="currentColor" viewBox="0 0 24 24">
+        <path
+          d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.871.508 9.388.508 9.388.508s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+      </svg>
+      <span>NoteFlow</span>
+    </div>
+
+    <div class="header-controls">
+      <!-- Notebook View Button -->
+      <button id="notebook-view-btn" class="btn-icon" title="View Saved Notes">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      </button>
+
+      <!-- Light/Dark Mode Button -->
+      <button id="theme-toggle-btn" class="btn-icon" title="Toggle theme">
+        <svg id="theme-sun-icon" class="hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <svg id="theme-moon-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main>
+
+    <!-- VIEW A: ACTIVE VIDEO NOTE EDITOR -->
+    <div id="active-editor-view">
+
+      <!-- Metadata Banner -->
+      <div class="active-video-banner">
+        <div class="banner-row">
+          <span class="active-badge">
+            <span class="badge-dot pulse"></span>Active Video
+          </span>
+          <div id="save-status" class="save-status">
+            <!-- Dynamic Save state text -->
+          </div>
+        </div>
+        <h2 id="current-video-title" class="video-title">Loading Video Meta...</h2>
+      </div>
+
+      <!-- Video Timestamp & Playback Controls -->
+      <div class="video-controls-bar">
+        <div class="video-controls-left">
+          <!-- Grab Timestamp button -->
+          <button id="btn-timestamp" class="toolbar-btn btn-timestamp" title="Grab current video timestamp">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Grab Time
+          </button>
+
+          <!-- Auto-Pause on Typing Toggle -->
+          <button id="btn-autopause" class="autopause-toggle" role="switch" aria-checked="false"
+            title="Auto-pause video and insert timestamp when you start typing">
+            <span class="toggle-track" aria-hidden="true">
+              <span class="toggle-thumb"></span>
+            </span>
+            <span>Auto-Pause</span>
+          </button>
+        </div>
+
+        <!-- Quick Unpause / Play-Pause Button + Shortcut Hint -->
+        <button id="btn-play-pause" class="btn-play-pause"
+          title="Play or pause video (Shortcut: Cmd+Shift+Space or Ctrl+Space)">
+          <!-- Play/Resume icon (shown when auto-paused) -->
+          <svg id="icon-play" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <!-- Neutral Play/Pause icon -->
+          <svg id="icon-play-pause" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5.25 5.653c0-.856.917-1.398 1.667-.986l7.54 4.347a1.125 1.125 0 010 1.972l-7.54 4.347a1.125 1.125 0 01-1.667-.986V5.653zM16.5 5.25v13.5m3.75-13.5v13.5" />
+          </svg>
+          <span id="play-pause-label">Play/Pause</span>
+          <kbd id="play-pause-kbd" class="kbd-hint">⇧⌘Space</kbd>
+        </button>
+      </div>
+
+      <!-- Controls Tab & Formatting helper bar -->
+      <div class="editor-controls">
+        <div class="tab-group">
+          <button id="tab-write-btn" class="tab-btn active">Write</button>
+          <button id="tab-preview-btn" class="tab-btn">Preview</button>
+        </div>
+
+        <div class="toolbar-formatting">
+          <!-- IDs used for CSP-compliant script-bound event handlers -->
+          <button id="fmt-bold" class="toolbar-btn" style="font-weight: 800;" title="Bold">B</button>
+          <button id="fmt-italic" class="toolbar-btn" style="font-style: italic;" title="Italic">I</button>
+          <button id="fmt-header" class="toolbar-btn" style="font-family: monospace; font-weight: 700;"
+            title="Header">H</button>
+          <button id="fmt-link" class="toolbar-btn" title="Add Link">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          </button>
+          <button id="fmt-checkbox" class="toolbar-btn" title="Checkbox">☑</button>
+        </div>
+      </div>
+
+      <!-- Editor Panel Elements -->
+      <div class="panels-container">
+        <textarea id="note-textarea"
+          placeholder="Start taking notes... Markdown syntax is supported! Click 'Grab Time' to insert a timestamp, or enable 'Auto-Pause' to pause and stamp automatically as you type."></textarea>
+        <div id="note-preview" class="markdown-body hidden"></div>
+      </div>
+
+      <!-- Footer Action Strip -->
+      <div class="actions-bar">
+        <button id="btn-delete-note" class="btn-delete-note">
+          <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Clear Note
+        </button>
+
+        <div class="right-actions">
+          <button id="btn-copy" class="btn-action btn-action-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+            Copy
+          </button>
+          <button id="btn-download" class="btn-action btn-action-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- VIEW B: NOTEBOOK DIRECTORY (All notes archive) -->
+    <div id="notebook-directory-view" class="notebook-directory-view hidden">
+      <div class="notebook-header">
+        <div class="notebook-header-top">
+          <h2 class="notebook-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            My Notebook
+          </h2>
+          <button id="close-notebook-btn" class="btn-back-link">
+            Back to Active Note →
+          </button>
+        </div>
+        <div class="search-container">
+          <input id="notebook-search-input" type="text" placeholder="Search saved video notes..." class="search-input">
+          <svg class="search-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- NEW: Collapsible Sync Panel inside Directory View -->
+        <div class="sync-settings-panel">
+          <button id="toggle-sync-settings-btn" class="btn-fallback"
+            style="width: 100%; max-width: none; font-size: 11px; padding: 6px; border-radius: 8px;">
+            ⚙️ Configure Server Sync
+          </button>
+
+          <div id="sync-settings-fields" class="sync-fields-container hidden">
+            <div class="sync-label">Sync URL</div>
+            <input id="sync-url-input" type="text" placeholder="https://yourdomain.com/sync.php" class="search-input"
+              style="padding-left: 10px; font-size: 11px;">
+
+            <div class="sync-label" style="margin-top: 4px;">X-API-Key Password</div>
+            <input id="sync-key-input" type="password" placeholder="Secret Key" class="search-input"
+              style="padding-left: 10px; font-size: 11px;">
+
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <button id="save-sync-settings-btn" class="btn-action btn-action-primary"
+                style="flex: 1; padding: 6px; justify-content: center; font-size: 11px;">Save</button>
+              <button id="trigger-sync-btn" class="btn-action btn-action-secondary"
+                style="flex: 1; padding: 6px; justify-content: center; font-size: 11px;">🔄 Sync Now</button>
+            </div>
+            <div id="sync-status-msg" class="sync-status-msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="notebook-list-container" class="notebook-list">
+        <!-- Dyn list -->
+      </div>
+    </div>
+
+
+    <!-- VIEW C: NOT ON YOUTUBE DETECTOR (Fallback landing pane) -->
+    <div id="not-youtube-view" class="not-youtube-view hidden">
+      <div class="fallback-icon-container">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="fallback-title">No Active YouTube Video</h3>
+      <p class="fallback-desc">
+        To take markdown notes on dynamic timestamps, navigate to any YouTube video watch page.
+      </p>
+      <button id="fallback-notebook-btn" class="btn-fallback">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        Open My Saved Notes Directory
+      </button>
+    </div>
+
+  </main>
+
+  <!-- CONFIRMATION DELETION MODAL overlay -->
+  <div id="confirm-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77(16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        Delete Notes?
+      </div>
+      <p class="modal-desc">
+        Are you sure you want to completely erase the notes for this video? This action cannot be undone.
+      </p>
+      <div class="modal-buttons">
+        <button id="modal-cancel-btn" class="btn-action btn-action-secondary">Cancel</button>
+        <button id="modal-confirm-btn" class="btn-action btn-action-primary"
+          style="background-color: var(--yt-red); color: white;">Confirm Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CSP Compliant Offline Script Reference -->
+  <script src="sidepanel.js"></script>
+</body>
+
+</html>

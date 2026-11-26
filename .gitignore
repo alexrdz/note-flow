@@ -26,6 +26,7 @@ Desktop.ini
 *.pem
 *.crx
 *.zip
+!yt-noteflow-extension.zip
 
 # Node / Tooling / Logs (if build or test scripts are added)
 node_modules/

@@ -69,8 +69,8 @@
           Never Lose Your Place in a YouTube Tutorial Again.
         </h1>
         <p class="hero__lead">
-          Take rich Markdown notes synced automatically to specific YouTube videos. Jump back to exact moments with
-          clickable interactive timestamps.
+          Take rich Markdown notes synced automatically to specific YouTube videos. Auto-pause and capture clickable
+          timestamps the moment you start typing, then resume playback with a single shortcut.
         </p>
         <div class="hero__ctas layout-cluster">
           <a href="yt-noteflow-extension.zip" download class="button button--primary">
@@ -127,8 +127,64 @@
           </div>
         </article>
 
-        <!-- Feature 2 -->
+        <!-- Feature 2: Auto-Pause & Quick Resume -->
         <article class="feature-split layout-grid">
+          <div class="feature-split__visual feature-split__visual--boxed">
+            <div class="code-window">
+              <div class="code-window__header">Side Panel — Active Video</div>
+              <div class="code-window__toolbar">
+                <span class="demo-autopause-pill">
+                  <span class="demo-switch" aria-hidden="true">
+                    <span class="demo-switch__thumb"></span>
+                  </span>
+                  Auto-Pause
+                </span>
+                <span class="demo-resume-pill">
+                  &#9654; Resume
+                  <kbd class="demo-kbd">&#8679;&#8984;Space</kbd>
+                </span>
+              </div>
+              <div class="code-window__body">
+                <button class="inline-timestamp">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  1:45
+                </button>
+                Config file structure<br><br>
+                <button class="inline-timestamp">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  2:15
+                </button>
+                Video paused &amp; stamped as I type<span class="demo-cursor" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+          <div class="feature-split__content layout-stack">
+            <h2 class="feature-split__title">Auto-Pause &amp; Instant Resume.</h2>
+            <p class="feature-split__text">
+              Keep your hands on the keyboard. Toggle on <strong>Auto-Pause</strong> and the video automatically pauses
+              and prepends a clickable timestamp the instant you start typing a new note line. Hit
+              <kbd class="demo-kbd">&#8679;&#8984;Space</kbd> (<kbd class="demo-kbd">Ctrl+Shift+Space</kbd> on
+              Windows/Linux, or <kbd class="demo-kbd">Ctrl+Space</kbd> inside the editor) to immediately resume
+              playback without losing cursor focus.
+            </p>
+          </div>
+        </article>
+
+        <!-- Feature 3 -->
+        <article class="feature-split layout-grid">
+          <div class="feature-split__content layout-stack feature-split__content--reverse-desktop">
+            <h2 class="feature-split__title">Markdown &amp; Offline-First.</h2>
+            <p class="feature-split__text">
+              Write in the format you already know. NoteFlow parses full GitHub-flavored Markdown. Because your notes
+              are stored in native browser storage, you can write and review them completely offline.
+            </p>
+          </div>
           <div class="feature-split__visual feature-split__visual--boxed">
             <div class="split-pane">
               <div class="split-pane__raw">
@@ -147,29 +203,22 @@
               </div>
             </div>
           </div>
-          <div class="feature-split__content layout-stack">
-            <h2 class="feature-split__title">Markdown & Offline-First.</h2>
-            <p class="feature-split__text">
-              Write in the format you already know. NoteFlow parses full GitHub-flavored Markdown. Because your notes
-              are stored in native browser storage, you can write and review them completely offline.
-            </p>
-          </div>
         </article>
 
-        <!-- Feature 3 -->
+        <!-- Feature 4 -->
         <article class="feature-split layout-grid">
-          <div class="feature-split__content layout-stack feature-split__content--reverse-desktop">
-            <h2 class="feature-split__title">Bring Your Own Sync.</h2>
-            <p class="feature-split__text">
-              No proprietary cloud lock-in. Configure a custom server endpoint to sync your notes to your own database,
-              Notion, or Obsidian vaults instantly via API. Your notes, your infrastructure.
-            </p>
-          </div>
           <div class="feature-split__visual">
             <div class="mockup-frame mockup-frame--sync">
               <img src="sync.png" alt="My Notebook Sync Configuration Panel" class="mockup-frame__image"
                 onerror="this.src='https://placehold.co/600x900/1f1f1f/aaaaaa?text=Sync+Settings+UI'">
             </div>
+          </div>
+          <div class="feature-split__content layout-stack">
+            <h2 class="feature-split__title">Bring Your Own Sync.</h2>
+            <p class="feature-split__text">
+              No proprietary cloud lock-in. Configure a custom server endpoint to sync your notes to your own database,
+              Notion, or Obsidian vaults instantly via API. Your notes, your infrastructure.
+            </p>
           </div>
         </article>
 
